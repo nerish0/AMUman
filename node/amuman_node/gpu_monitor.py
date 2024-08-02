@@ -14,6 +14,7 @@ from amuman_node.gpu import GPU, GPUStatus
 
 log = logging.getLogger("rich")
 
+
 class GPUMonitor:
     def __init__(self, node: int, api: API) -> None:
         self.node: int = node
@@ -36,7 +37,6 @@ class GPUMonitor:
         failure_action_word = "assign" if action == "assign" else "update"
         for gpu in self.gpus:
             if action == "update":
-                print('update!!!!!!!')
                 gpu.update_status()
             elif action == "bench":
                 gpu.bench_speed()
@@ -64,4 +64,5 @@ class GPUMonitor:
                             error_message += " Error content was not json"
                     log.error(error_message)
             except requests.exceptions.RequestException as e:
-                log.exception(f"Network error during GPU {failure_action_word}: {e}")
+                log.exception(
+                    f"Network error during GPU {failure_action_word}: {e}")

@@ -1,0 +1,12 @@
+Nx = 640
+Ny = 640
+Nz = 10
+dx = 4e-9
+dy = 4e-9
+dz = 4e-9
+Msat = 1e6
+Aex = 10e-12
+alpha = 1
+m = RandomMag()
+relax()
+run(5e-9)

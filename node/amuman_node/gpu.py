@@ -5,17 +5,19 @@ import string
 import subprocess
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
-from typing import List,Dict
+from typing import List, Dict
 from enum import Enum
 import requests
 
 log = logging.getLogger("rich")
+
 
 class GPUStatus(Enum):
     RUNNING = "RUNNING"
     PENDING = "PENDING"
     RESERVED = "RESERVED"  # not implemented
     UNAVAILABLE = "UNAVAILABLE"  # High usage not from job or error
+
 
 @dataclass
 class GPU:
@@ -31,7 +33,7 @@ class GPU:
         default_factory=lambda: datetime.now()
     )  # Use default_factory
     speed: str = field(default="NORMAL")  # Add speed field
-    speed_score: str = field(default=0.0)  
+    speed_score: str = field(default=0.0)
 
     # Do we want it to run when the GPU class is created?
     def __post_init__(self) -> None:
@@ -44,14 +46,12 @@ class GPU:
         self.gpu_util = self.get_gpu_util()
         self.mem_util = self.get_mem_util()
         self.status = self.get_gpu_load_status()
-        # self.speed = self.get_gpu_performance_category()
         self.is_running_amumax = self.check_is_amumax_running()
         self.refresh_time = datetime.now()
 
     def bench_speed(self) -> None:
         log.info("Benching GPUs")
         self.amumax_run()
-
 
     def query_nvidia_smi(self, query: str) -> str:
         try:
@@ -70,7 +70,8 @@ class GPU:
             )
             return output
         except subprocess.CalledProcessError as e:
-            log.error(f"Error running nvidia-smi for GPU {self.device_id}: {e}")
+            log.error(
+                f"Error running nvidia-smi for GPU {self.device_id}: {e}")
         except Exception as e:
             log.error(f"Unexpected error for GPU {self.device_id}: {e}")
         return ""
@@ -97,10 +98,9 @@ class GPU:
         return mem_util
 
     def check_is_amumax_running(self) -> bool:
-        #log.debug("AMUMAX CHECK")
         output = self.query_nvidia_smi("--query-compute-apps=process_name")
         is_running = "amumax" in output if output else False
-        
+
         log.debug(f"GPU {self.device_id} amumax running: {is_running}")
         return is_running
 
@@ -108,7 +108,6 @@ class GPU:
         model = self.query_nvidia_smi("--query-gpu=gpu_name")
         log.debug(f"GPU {self.device_id} model: {model}")
         return model
-    
 
     def get_gpu_performance_category(self) -> str:
         gpu_performance = {
@@ -158,18 +157,20 @@ class GPU:
         uuid = raw_uuid.replace("GPU-", "").strip()
         log.debug(f"GPU {self.device_id} UUID: {uuid}")
         return uuid
-    
+
     def amumax_run(self) -> float:
-        self.command = ["amumax", "-magnets=0", "/app/node/amuman_node/bench.mx3"]
+        self.command = ["amumax", "-magnets=0",
+                        "/app/node/amuman_node/bench.mx3"]
         try:
-            result = subprocess.run(self.command, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=False)
+            result = subprocess.run(
+                self.command, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=False)
             log.debug(f"Amumax benchmark: {result} ")
             return self.read_zattrs('/app/node/amuman_node/bench.zarr')
-           
+
         except subprocess.CalledProcessError as e:
             log.error(f"Failed to run amumax benchmark: {e}")
             raise e
-            
+
     def read_zattrs(self, path_zarr) -> string:
         path_zattrs = os.path.join(path_zarr, '.zattrs')
         if os.path.exists(path_zattrs):
@@ -179,18 +180,18 @@ class GPU:
                     total_time = float((data_zattrs['total_time'])[:-1])
                     self.speed_score = total_time
                     self.speed = self.switch(total_time)
-                    return(self.speed)
+                    return (self.speed)
             except ValueError:
-                log.error("Decoding JSON file has failed")    
-                
+                log.error("Decoding JSON file has failed")
+
     def switch(self, time):
         if time < 30:
             return "FAST"
         elif 30 <= time < 60:
-            return "STANDARD"        
+            return "STANDARD"
         elif time >= 60:
-            return "SLOW"               
-    
+            return "SLOW"
+
     def to_json(self):
         data = {
             "device_id": self.device_id,
@@ -203,10 +204,10 @@ class GPU:
             "speed": self.speed,
             "speed_score": self.speed_score,
             "last_update": self.refresh_time.strftime("%Y-%m-%d %H:%M:%S"),
-            #"last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+
         }
         return data
-    
+
     def asdict(self) -> Dict[str, str]:
         result = asdict(self)
         for key, value in result.items():

@@ -13,6 +13,7 @@ from manager.models import Job, Node, Gpu
 
 log = logging.getLogger("rich")
 
+
 def get_node_id(scope) -> int | None:
     try:
         query_string = parse_qs(scope["query_string"].decode("utf8"))
@@ -20,6 +21,7 @@ def get_node_id(scope) -> int | None:
     except Exception as e:
         log.error(f"Error getting node_id: {e}")
         return None
+
 
 class ManagerConsumer(AsyncWebsocketConsumer):
 
@@ -32,10 +34,8 @@ class ManagerConsumer(AsyncWebsocketConsumer):
         self.node_id = get_node_id(self.scope)
         await self.update_node_connection_status(self.node_id, "CONNECTED")
         await self.update_node_status(self.node_id, "PENDING")
-        #await self.update_jobs_when_conn(self.node_id)
         await self.update_gpu_status(self.node_id, "PENDING")
 
-        log.debug(f"WEBSOCKET: Node ID: {self.node_id}")
         if self.channel_layer:
             await self.channel_layer.group_add("nodes_group", self.channel_name)
             await self.accept()
@@ -46,9 +46,9 @@ class ManagerConsumer(AsyncWebsocketConsumer):
                 await self.update_node_connection_status(self.node_id, "DISCONNECTED")
                 await self.update_node_status(self.node_id, "UNAVAILABLE")
                 await self.update_gpu_status(self.node_id, "UNAVAILABLE")
-                #await self.check_lost_connection(self.node_id)
                 asyncio.create_task(self.check_lost_connection(self.node_id))
-                asyncio.create_task(self.delayed_job_interruption(self.node_id, delay=60))
+                asyncio.create_task(
+                    self.delayed_job_interruption(self.node_id, delay=60))
 
             if self.channel_layer:
                 await self.channel_layer.group_discard("nodes_group", self.channel_name)
@@ -74,7 +74,7 @@ class ManagerConsumer(AsyncWebsocketConsumer):
             job.end_time = msg.result.get("end_time")
             job.save()
         except Job.DoesNotExist:
-            log.error(f"Job {msg.job_id} does not exisrt")
+            log.error(f"Job {msg.job_id} does not exist")
 
     @database_sync_to_async
     def update_node_connection_status_internal(self, node_id, status):
@@ -92,9 +92,9 @@ class ManagerConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def interrupt_long_disconnected_jobs(self, node_id):
         try:
-            log.debug("STARTING INTERR WAIT")
             disconnected_time_threshold = timezone.now() - timezone.timedelta(minutes=30)
-            log.debug(f"Disconnection threshold time: {disconnected_time_threshold}")
+            log.debug(
+                f"Disconnection threshold time: {disconnected_time_threshold}")
 
             jobs_to_interrupt = Job.objects.filter(
                 node__id=node_id,
@@ -102,7 +102,6 @@ class ManagerConsumer(AsyncWebsocketConsumer):
                 node__last_seen__lt=disconnected_time_threshold,
                 status="CONNECTION_LOST"
             )
-            log.debug(f"Jobs to interrupt {jobs_to_interrupt}")
 
             for job in jobs_to_interrupt:
                 log.debug(f"Interrupting job {job.id}")
@@ -115,12 +114,13 @@ class ManagerConsumer(AsyncWebsocketConsumer):
     def check_lost_connection(self, node_id):
         try:
             disconnected_time_threshold = timezone.now() - timezone.timedelta(minutes=30)
-            log.debug(f"Lost connection threshold time: {disconnected_time_threshold}")
+            log.debug(
+                f"Lost connection threshold time: {disconnected_time_threshold}")
 
             jobs_to_interrupt = Job.objects.filter(
                 node__id=node_id,
                 node__connection_status="DISCONNECTED",
-                #node__last_seen__lt=disconnected_time_threshold,
+                # node__last_seen__lt=disconnected_time_threshold,
                 status="RUNNING"
             )
             log.debug(f"Jobs with lost connection: {jobs_to_interrupt}")

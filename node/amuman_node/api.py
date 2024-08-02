@@ -121,24 +121,21 @@ class API:
             json=job.asdict(),
         )
         return res
-    
+
     def put_node(self, node: Node) -> requests.Response:
         res = requests.put(
             self.url + f"/nodes/{node.id}/",
             headers=self.headers,
             json=node.asdict(),
         )
-        print("res!!!", res)
         return res
-    
+
     def put_gpu(self, gpu, gpu_id: int) -> requests.Response:
-        print('gpu as dict ::: ', gpu )
         res = requests.put(
             self.url + f"/gpus/{gpu_id}/",
             headers=self.headers,
             json=gpu,
         )
-        #print('res:', res)
         return res
 
     def get_job(self, id: int) -> Job:
@@ -147,54 +144,73 @@ class API:
             headers=self.headers,
         )
         return Job(**res.json())
-    
+
     def get_node(self, id: int) -> Node:
         res = requests.get(
             self.url + f"/nodes/{id}/",
             headers=self.headers,
         )
         return Node(**res.json())
-    
-    
-    def get_gpu_id_by_device_id(self, device_id: int) -> int:
-        res = requests.get(self.url + "/gpus/", headers=self.headers)
-        log.debug(f"Response status code: {res.status_code}")
-        log.debug(f"Response content: {res.text}")  
-        if res.status_code == 200:
-            try:
-                gpus = res.json()
-                if 'results' in gpus and isinstance(gpus['results'], list):
-                    for gpu in gpus['results']:
-                        if gpu['device_id'] == device_id:
-                            return gpu['id']
-                    raise ValueError(f"GPU with device_id {device_id} not found.")
-                else:
-                    raise ValueError("Unexpected response format: expected a dictionary with a 'results' list.")
-            except ValueError as ve:
-                raise ValueError(f"Error parsing JSON response: {ve}")
-        else:
-            raise ValueError(f"Failed to fetch GPUs list. Status code: {res.status_code}")
 
+    # def get_gpu_id_by_device_id(self, device_id: int) -> int:
+    #     res = requests.get(self.url + "/gpus/", headers=self.headers)
+    #     log.debug(f"Response status code: {res.status_code}")
+    #     log.debug(f"Response content: {res.text}")
+    #     if res.status_code == 200:
+    #         try:
+    #             gpus = res.json()
+    #             if 'results' in gpus and isinstance(gpus['results'], list):
+    #                 for gpu in gpus['results']:
+    #                     if gpu['device_id'] == device_id:
+    #                         return gpu['id']
+    #                 raise ValueError(
+    #                     f"GPU with device_id {device_id} not found.")
+    #             else:
+    #                 raise ValueError(
+    #                     "Unexpected response format: expected a dictionary with a 'results' list.")
+    #         except ValueError as ve:
+    #             raise ValueError(f"Error parsing JSON response: {ve}")
+    #     else:
+    #         raise ValueError(
+    #             f"Failed to fetch GPUs list. Status code: {res.status_code}")
 
     def get_gpu(self, device_id: int) -> GPU:
-        print("ID!!! :", device_id)
-        #id_n = self.get_gpu_id_by_device_id(device_id)
+
         res = requests.get(
             self.url + f"/gpus/{device_id}/",
             headers=self.headers,
         )
         response_data = res.json()
-        print(f"Response: {response_data}")
         k_t_rem = 'id'
         r_res = response_data[k_t_rem]
         del response_data[k_t_rem]
-        #response_data['id_c'] = response_data.pop('device_id')
-        #response_data['node_id'] = response_data.pop('node')
         response_data['gpu_util'] = response_data.pop('util')
         response_data['refresh_time'] = response_data.pop('last_update')
-        #response_data['refresh_time'] = datetime.fromisoformat(response_data.pop('last_update'))
-        #response_data['refresh_time'] = json.dumps(response_data['refresh_time'] .strftime("%Y-%m-%d %H:%M:%S")) 
-        response_data['node'] = int(response_data['node'] )
-        print('response after', response_data)
-        
+        response_data['node'] = int(response_data['node'])
+
         return [GPU(**response_data), r_res]
+
+    # def fetch_all_gpus(self) -> list[GPU]:
+    #     try:
+    #         res = requests.get(self.url + "/gpus/", headers=self.headers)
+    #         res.raise_for_status()
+    #         gpus_data = res.json()
+    #         gpus = []
+    #         for gpu_data in gpus_data['results']:
+    #             gpu = GPU(**gpu_data)
+    #             gpus.append(gpu)
+    #         return gpus
+    #     except requests.RequestException as e:
+    #         log.error(f"Error fetching GPUs: {e}")
+    #         return []
+
+    # def update_gpu_status(self, gpu: GPU, gpu_id: int) -> None:
+    #     try:
+    #         gpu_data = {
+    #             "status": gpu.status,
+    #             "last_update": gpu.last_update.isoformat(),
+    #         }
+    #         res = requests.put(self.url + f"/gpus/{gpu_id}/", headers=self.headers, json=gpu_data)
+    #         res.raise_for_status()
+    #     except requests.RequestException as e:
+    #         log.error(f"Error updating GPU status: {e}")

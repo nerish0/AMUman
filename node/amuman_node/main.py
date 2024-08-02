@@ -19,7 +19,8 @@ logging.basicConfig(
     format="%(message)s",
     datefmt="[%X]",
     handlers=[
-        RichHandler(rich_tracebacks=True, tracebacks_suppress=[websockets, requests])
+        RichHandler(rich_tracebacks=True, tracebacks_suppress=[
+                    websockets, requests])
     ],
 )
 log = logging.getLogger("rich")
@@ -35,21 +36,23 @@ class NodeClient:
         self.api: API = API(self.config)
         self.gpm: Optional[GPUMonitor] = None
         self.ws: Websockets
-
         self.run()
 
     def run(self) -> None:
         if self.register_with_manager():
-            self.ws = Websockets(self.api, self.node_id, self.config.name, self.gpm)
+            self.ws = Websockets(self.api, self.node_id,
+                                 self.config.name, self.gpm)
             try:
                 asyncio.run(self.ws.websocket_loop())
             except KeyboardInterrupt:
-                log.warning("Caught KeyboardInterrupt (Ctrl+C). Shutting down...")
+                log.warning(
+                    "Caught KeyboardInterrupt (Ctrl+C). Shutting down...")
                 # self.ws.close()
 
     def get_own_ip(self) -> str:
         try:
-            ip: str = requests.get("https://api.ipify.org").content.decode("utf8")
+            ip: str = requests.get(
+                "https://api.ipify.org").content.decode("utf8")
             log.debug(f"IP={ip}")
             return ip
         except Exception as err:

@@ -60,7 +60,8 @@ class JobsViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, _request, *_args, **_kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance, context={"action": self.action})
+        serializer = self.get_serializer(
+            instance, context={"action": self.action})
         return Response(serializer.data)
 
     def create(self, request, *_args, **_kwargs):
@@ -70,7 +71,7 @@ class JobsViewSet(viewsets.ModelViewSet):
         modified_data["username"] = custom_user.auth.username
         modified_data["user"] = custom_user.pk
         modified_data["submit_time"] = timezone.now()
-        log.debug(f"Modified data: {modified_data}")
+        #log.debug(f"Modified data: {modified_data}")
         # Now, proceed with serialization and saving as before
         serializer = self.get_serializer(data=modified_data)
         try:
@@ -84,7 +85,7 @@ class JobsViewSet(viewsets.ModelViewSet):
 
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
-            log.debug(f"Job created: {serializer.data}")
+            #log.debug(f"Job created: {serializer.data}")
             return Response(
                 serializer.data, status=status.HTTP_201_CREATED, headers=headers
             )
@@ -92,7 +93,8 @@ class JobsViewSet(viewsets.ModelViewSet):
             log.error(f"Job not created: {e}")
             # If headers is not defined before the try-except block, it should be moved inside the try block or defined before it
             return Response(
-                {"detail": str(e)},  # It's better to return structured error responses
+                # It's better to return structured error responses
+                {"detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -172,7 +174,6 @@ class NodesViewSet(viewsets.ModelViewSet):
     serializer_class = NodeSerializer
     permission_classes: ClassVar = [permissions.IsAuthenticated]
 
-
     @action(
         detail=False,
         methods=["post"],
@@ -224,7 +225,8 @@ class NodesViewSet(viewsets.ModelViewSet):
                     headers=headers,
                 )
             else:
-                serializer = self.get_serializer(node, data=request.data, partial=True)
+                serializer = self.get_serializer(
+                    node, data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
                 return Response(

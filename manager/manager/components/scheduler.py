@@ -58,14 +58,14 @@ class ThreadedScheduler(Scheduler):
     def run_continuously(self):
         while not self._stop_event.is_set():
             self.run_pending()
-            #log.debug(f"Scheduler is running, {self.get_jobs()}")
             log.debug("Scheduler is running")
             time.sleep(self.interval)
 
     def initiate_thread(self):
         if self.thread is None or not self.thread.is_alive():
             self._stop_event.clear()  # Upewnij się, że flaga stopu jest wyczyszczona
-            self.thread = threading.Thread(target=self.run_continuously, daemon=True)
+            self.thread = threading.Thread(
+                target=self.run_continuously, daemon=True)
             self.thread.start()
 
     def start(self):

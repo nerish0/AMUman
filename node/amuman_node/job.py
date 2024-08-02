@@ -6,9 +6,11 @@ from typing import Dict, Optional
 
 log = logging.getLogger("rich")
 
+
 class JobPriority(Enum):
     URGENT = "URGENT"
     NORMAL = "NORMAL"
+
 
 class JobStatus(Enum):
     PENDING = "PENDING"
@@ -49,7 +51,7 @@ class Job:
     flags: Optional[str] = None
     subprocess: Optional[asyncio.subprocess.Process] = field(default=None)
     run_attempts: Optional[int] = field(default=0)
-     
+
     def asdict(self) -> Dict[str, str]:
         result = asdict(self)
         for key, value in result.items():

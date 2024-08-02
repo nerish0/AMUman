@@ -26,17 +26,16 @@ def run_job(job: Job, gpu: Gpu | None = None) -> Response:
         job.gpu = gpu
 
         job.status = Job.JobStatus.RUNNING.value
+        gpu.status = Gpu.GPUStatus.RUNNING.value
+        gpu.node.status = Node.NodeStatus.RUNNING.value
+        node = Node.objects.filter(
+            ip = gpu.node.ip
+        ).first()
+        node.status = Node.NodeStatus.RUNNING.value
         job.start_time = timezone.now()
         job.save()
 
         if send_run_command(job):
-            gpu.status = Gpu.GPUStatus.RUNNING.value
-            gpu.node.status = Node.NodeStatus.RESERVED.value
-            node = Node.objects.filter(
-                ip = gpu.node.ip
-            ).first()
-            node.status = Node.NodeStatus.RESERVED.value
-            #log.debug("!!!!! status node: ", gpu.node.status, "job:",job.node.id )
             gpu.last_update = job.start_time
 
             gpu.save()

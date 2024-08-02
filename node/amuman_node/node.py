@@ -7,14 +7,18 @@ from datetime import datetime
 
 log = logging.getLogger("rich")
 
+
 class ConnectionStatus(Enum):
     CONNECTED = "CONNECTED"
     DISCONNECTED = "DISCONNECTED"
 
+
 class NodeStatus(Enum):
     PENDING = "PENDING"
     RESERVED = "RESERVED"
+    RUNNING = "RUNNING"
     UNAVAILABLE = "UNAVAILABLE"
+
 
 @dataclass
 class Node:
@@ -22,7 +26,7 @@ class Node:
     ip: str
     name: str
     number_of_gpus: int
-    status: NodeStatus = NodeStatus.PENDING
+    status: NodeStatus = NodeStatus.PENDING.value
     connection_status: ConnectionStatus = ConnectionStatus.CONNECTED
     last_seen: datetime = field(default_factory=datetime.now)
 

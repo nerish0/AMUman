@@ -14,6 +14,7 @@ class Node(models.Model):
     class NodeStatus(Enum):
         PENDING = "PENDING"
         RESERVED = "RESERVED"
+        RUNNING = "RUNNING"
         UNAVAILABLE = "UNAVAILABLE"
 
     ip = models.GenericIPAddressField()
